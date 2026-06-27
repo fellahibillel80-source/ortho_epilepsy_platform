@@ -2,7 +2,8 @@ import { defineStore } from 'pinia';
 import axios from 'axios';
 
 // Set standard API base url (Laravel backend)
-axios.defaults.baseURL = 'http://192.168.1.27:8000/api';
+// For production, use the deployed Render API url instead of localhost
+axios.defaults.baseURL = 'https://milmat-backend.onrender.com/api';
 
 export const useAuthStore = defineStore('auth', {
   state: () => ({
