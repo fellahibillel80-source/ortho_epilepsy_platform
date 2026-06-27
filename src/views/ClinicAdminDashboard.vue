@@ -22,6 +22,13 @@
             <UsersIcon class="w-5 h-5" />
             المرضى والمتابعة
           </button>
+          <button 
+            @click="activeTab = 'settings'" 
+            :class="['w-full flex items-center gap-3 px-4 py-3 rounded-xl font-semibold transition-all text-right', activeTab === 'settings' ? 'bg-primary-600 text-white shadow-lg shadow-primary-600/20' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50']"
+          >
+            <SettingsIcon class="w-5 h-5" />
+            إعدادات العيادة
+          </button>
         </nav>
       </div>
 
@@ -195,6 +202,88 @@
         </section>
       </div>
 
+      <!-- TAB 3: SETTINGS -->
+      <div v-if="activeTab === 'settings'">
+        <header class="mb-10">
+          <h1 class="text-3xl font-extrabold text-slate-900">إعدادات العيادة والملف الشخصي</h1>
+          <p class="text-slate-500 mt-1">عرض بيانات عيادتك وتحديث معلومات حساب المدير</p>
+        </header>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          <!-- Clinic Info (Read-only) -->
+          <section class="bg-white p-8 rounded-2xl border border-slate-100 shadow-sm">
+            <h3 class="text-lg font-bold text-slate-900 mb-6 flex items-center gap-2">
+              <BuildingIcon class="w-5 h-5 text-primary-500" />
+              بيانات العيادة المسجلة
+            </h3>
+            
+            <div class="space-y-4" v-if="clinicInfo">
+              <div>
+                <label class="block text-sm font-medium text-slate-500">اسم العيادة</label>
+                <div class="mt-1 text-slate-900 font-bold">{{ clinicInfo.name }}</div>
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-slate-500">العنوان</label>
+                <div class="mt-1 text-slate-900">{{ clinicInfo.address || 'غير محدد' }}</div>
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-slate-500">رقم الهاتف</label>
+                <div class="mt-1 text-slate-900">{{ clinicInfo.phone || 'غير محدد' }}</div>
+              </div>
+              <div class="pt-4 border-t border-slate-100">
+                <label class="block text-sm font-medium text-slate-500 mb-2">حالة الاشتراك</label>
+                <div class="flex items-center gap-3">
+                  <span :class="['px-3 py-1 text-sm font-bold rounded-full', clinicInfo.subscription_status === 'active' ? 'bg-emerald-100 text-emerald-800' : 'bg-red-100 text-red-800']">
+                    {{ clinicInfo.subscription_status === 'active' ? 'نشط' : 'غير نشط' }}
+                  </span>
+                  <span class="text-sm text-slate-600 bg-slate-100 px-3 py-1 rounded-lg">
+                    الباقة: {{ clinicInfo.subscription_plan === 'premium' ? 'متقدمة' : 'قياسية' }}
+                  </span>
+                </div>
+              </div>
+            </div>
+            <div v-else class="text-slate-400 text-sm">جاري تحميل بيانات العيادة...</div>
+          </section>
+
+          <!-- Profile Settings -->
+          <section class="bg-white p-8 rounded-2xl border border-slate-100 shadow-sm">
+            <h3 class="text-lg font-bold text-slate-900 mb-6 flex items-center gap-2">
+              <UserCogIcon class="w-5 h-5 text-primary-500" />
+              تحديث حساب المدير
+            </h3>
+            
+            <form @submit.prevent="updateProfile" class="space-y-5">
+              <div v-if="profileMessage" :class="['p-4 rounded-xl text-sm font-medium', profileError ? 'bg-red-50 text-red-700' : 'bg-emerald-50 text-emerald-700']">
+                {{ profileMessage }}
+              </div>
+
+              <div>
+                <label class="block text-sm font-medium text-slate-700 mb-1">اسم المدير</label>
+                <input v-model="profileForm.name" type="text" required class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-primary-500 focus:bg-white transition-all" />
+              </div>
+              
+              <div>
+                <label class="block text-sm font-medium text-slate-700 mb-1">البريد الإلكتروني (لتسجيل الدخول)</label>
+                <input v-model="profileForm.email" type="email" required class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-primary-500 focus:bg-white transition-all" />
+              </div>
+
+              <div>
+                <label class="block text-sm font-medium text-slate-700 mb-1">كلمة المرور الجديدة</label>
+                <input v-model="profileForm.password" type="password" placeholder="اتركه فارغاً إذا لم ترغب بتغييره" class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-primary-500 focus:bg-white transition-all" />
+                <p class="text-xs text-slate-400 mt-1">يجب أن تتكون من 8 أحرف على الأقل في حال تغييرها.</p>
+              </div>
+
+              <div class="pt-2">
+                <button type="submit" :disabled="submittingProfile" class="w-full py-3 bg-primary-600 hover:bg-primary-700 text-white font-bold rounded-xl shadow-lg shadow-primary-600/20 transition-all disabled:opacity-50">
+                  <span v-if="submittingProfile">جاري التحديث...</span>
+                  <span v-else>حفظ التغييرات</span>
+                </button>
+              </div>
+            </form>
+          </section>
+        </div>
+      </div>
+
     </main>
 
     <!-- Create Specialist Modal -->
@@ -323,7 +412,10 @@ import {
   LogOut as LogOutIcon, 
   Plus as PlusIcon, 
   Activity as ActivityIcon,
-  Users as UsersIcon
+  Users as UsersIcon,
+  Settings as SettingsIcon,
+  Building as BuildingIcon,
+  UserCog as UserCogIcon
 } from 'lucide-vue-next';
 
 const router = useRouter();
@@ -333,6 +425,16 @@ const user = computed(() => authStore.user);
 const activeTab = ref('specialists');
 const specialists = ref([]);
 const patients = ref([]);
+const clinicInfo = ref(null);
+
+const profileForm = ref({
+  name: '',
+  email: '',
+  password: ''
+});
+const profileMessage = ref('');
+const profileError = ref(false);
+const submittingProfile = ref(false);
 
 const showCreateModal = ref(false);
 const showLinkModal = ref(false);
@@ -375,6 +477,34 @@ const fetchPatients = async () => {
     patients.value = response.data;
   } catch (error) {
     console.error('Failed to fetch patients', error);
+  }
+};
+
+const fetchClinicInfo = async () => {
+  try {
+    const response = await axios.get('/clinic/info');
+    clinicInfo.value = response.data;
+  } catch (error) {
+    console.error('Failed to fetch clinic info', error);
+  }
+};
+
+const updateProfile = async () => {
+  profileMessage.value = '';
+  submittingProfile.value = true;
+  profileError.value = false;
+  try {
+    const res = await axios.put('/clinic/profile', profileForm.value);
+    profileMessage.value = res.data.message || 'تم تحديث الملف الشخصي بنجاح.';
+    // Update local store with new data
+    authStore.user.name = res.data.user.name;
+    authStore.user.email = res.data.user.email;
+    profileForm.value.password = ''; // clear password field
+  } catch (error) {
+    profileError.value = true;
+    profileMessage.value = error.response?.data?.message || 'فشل في تحديث الملف الشخصي.';
+  } finally {
+    submittingProfile.value = false;
   }
 };
 
@@ -464,5 +594,11 @@ const handleLogout = async () => {
 onMounted(() => {
   fetchSpecialists();
   fetchPatients();
+  fetchClinicInfo();
+  
+  if (user.value) {
+    profileForm.value.name = user.value.name;
+    profileForm.value.email = user.value.email;
+  }
 });
 </script>
