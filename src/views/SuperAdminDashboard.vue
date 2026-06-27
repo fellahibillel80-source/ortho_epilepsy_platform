@@ -367,25 +367,61 @@
           <h3 class="text-xl font-bold text-slate-900">تعديل اشتراك: {{ activeClinic?.name }}</h3>
           <button @click="showSubscriptionModal = false" class="text-slate-400 hover:text-slate-600">✕</button>
         </header>
-        <form @submit.prevent="updateSubscription" class="p-6 space-y-4">
-          <div>
-            <label class="block text-sm font-medium text-slate-600 mb-1">حالة الاشتراك المالي</label>
-            <select v-model="subForm.subscription_status" class="w-full px-3 py-2 border rounded-xl focus:ring-primary-500">
-              <option value="active">نشط / مفعل</option>
-              <option value="suspended">موقوف مؤقتاً</option>
-              <option value="expired">منتهي الصلاحية</option>
-            </select>
+        <form @submit.prevent="updateSubscription" class="p-6 space-y-4 max-h-[80vh] overflow-y-auto">
+          
+          <h4 class="font-bold text-primary-700 text-sm border-b pb-1">بيانات العيادة</h4>
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="block text-sm font-medium text-slate-600 mb-1">اسم العيادة</label>
+              <input v-model="subForm.name" type="text" required class="w-full px-3 py-2 border rounded-xl focus:ring-primary-500" />
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-slate-600 mb-1">الهاتف</label>
+              <input v-model="subForm.phone" type="text" class="w-full px-3 py-2 border rounded-xl focus:ring-primary-500" />
+            </div>
           </div>
           <div>
-            <label class="block text-sm font-medium text-slate-600 mb-1">نوع باقة الاشتراك</label>
-            <select v-model="subForm.subscription_plan" class="w-full px-3 py-2 border rounded-xl focus:ring-primary-500">
-              <option value="standard">باقة قياسية Standard</option>
-              <option value="premium">باقة متقدمة Premium</option>
-            </select>
+            <label class="block text-sm font-medium text-slate-600 mb-1">العنوان</label>
+            <input v-model="subForm.address" type="text" class="w-full px-3 py-2 border rounded-xl focus:ring-primary-500" />
+          </div>
+
+          <h4 class="font-bold text-primary-700 text-sm border-b pb-1 pt-2">معلومات الاشتراك</h4>
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="block text-sm font-medium text-slate-600 mb-1">حالة الاشتراك المالي</label>
+              <select v-model="subForm.subscription_status" class="w-full px-3 py-2 border rounded-xl focus:ring-primary-500">
+                <option value="active">نشط / مفعل</option>
+                <option value="suspended">موقوف مؤقتاً</option>
+                <option value="expired">منتهي الصلاحية</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-slate-600 mb-1">نوع باقة الاشتراك</label>
+              <select v-model="subForm.subscription_plan" class="w-full px-3 py-2 border rounded-xl focus:ring-primary-500">
+                <option value="standard">باقة قياسية Standard</option>
+                <option value="premium">باقة متقدمة Premium</option>
+              </select>
+            </div>
           </div>
           <div>
             <label class="block text-sm font-medium text-slate-600 mb-1">تاريخ نهاية الاشتراك</label>
             <input v-model="subForm.subscription_ends_at" type="date" class="w-full px-3 py-2 border rounded-xl focus:ring-primary-500" />
+          </div>
+
+          <h4 class="font-bold text-primary-700 text-sm border-b pb-1 pt-2">بيانات حساب المدير</h4>
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="block text-sm font-medium text-slate-600 mb-1">اسم المدير</label>
+              <input v-model="subForm.admin_name" type="text" required class="w-full px-3 py-2 border rounded-xl focus:ring-primary-500" />
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-slate-600 mb-1">البريد الإلكتروني</label>
+              <input v-model="subForm.admin_email" type="email" required class="w-full px-3 py-2 border rounded-xl focus:ring-primary-500" />
+            </div>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-slate-600 mb-1">تغيير كلمة المرور</label>
+            <input v-model="subForm.admin_password" type="password" placeholder="اتركه فارغاً لعدم التغيير" class="w-full px-3 py-2 border rounded-xl focus:ring-primary-500" />
           </div>
 
           <footer class="flex justify-end gap-3 pt-4">
@@ -492,9 +528,16 @@ const form = ref({
 });
 
 const subForm = ref({
+  name: '',
+  phone: '',
+  address: '',
   subscription_status: 'active',
   subscription_plan: 'standard',
   subscription_ends_at: '',
+  admin_id: null,
+  admin_name: '',
+  admin_email: '',
+  admin_password: '',
 });
 
 const bankForm = ref({
@@ -571,10 +614,21 @@ const createClinic = async () => {
 
 const openSubscriptionModal = (clinic) => {
   activeClinic.value = clinic;
+  
+  // Extract admin details (first user is usually the admin)
+  const admin = clinic.users && clinic.users.length > 0 ? clinic.users[0] : null;
+
   subForm.value = {
+    name: clinic.name || '',
+    phone: clinic.phone || '',
+    address: clinic.address || '',
     subscription_status: clinic.subscription_status || 'active',
     subscription_plan: clinic.subscription_plan || 'standard',
     subscription_ends_at: clinic.subscription_ends_at ? clinic.subscription_ends_at.split('T')[0] : '',
+    admin_id: admin ? admin.id : null,
+    admin_name: admin ? admin.name : '',
+    admin_email: admin ? admin.email : '',
+    admin_password: '', // Leave empty by default
   };
   showSubscriptionModal.value = true;
 };
