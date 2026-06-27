@@ -509,23 +509,24 @@ const updateProfile = async () => {
 };
 
 const createSpecialist = async () => {
-  modalError.value = '';
-  submitting.value = true;
-  try {
-    await axios.post('/clinic/specialists', form.value);
-    showCreateModal.value = false;
-    form.value = {
-      name: '',
-      email: '',
-      password: '',
-      specialty: 'أرطوفونيا وتخاطب (Speech Therapist)',
-    };
-    fetchSpecialists();
-  } catch (error) {
-    modalError.value = error.response?.data?.message || 'فشل إدخال البيانات.';
-  } finally {
-    submitting.value = false;
-  }
+    submitting.value = true;
+    try {
+        const response = await axios.post('/clinic/specialists', form.value);
+        // Close modal and reset form
+        showCreateModal.value = false;
+        form.value = { name: '', email: '', password: '', specialty: '' };
+        // Add the newly created specialist to the list (reactive)
+        if (response.data && response.data.specialist) {
+            specialists.value = [...specialists.value, response.data.specialist];
+        } else {
+            // Fallback: re-fetch the list from server
+            fetchSpecialists();
+        }
+    } catch (error) {
+        console.error('Failed to create specialist', error);
+    } finally {
+        submitting.value = false;
+    }
 };
 
 const openLinkModal = (patient) => {
